@@ -1,0 +1,178 @@
+#!/bin/bash
+user_input_tt_id=$1
+	#Блок работы с шопс.цсв по тт_ид, выбирает из какого файла тест_категориес читать категории для проверки (файл тест_кетагориес уникален для каждой сети)
+	
+function choice_test_categ() { 
+
+if [ -n "$user_input_tt_id" ]
+then
+
+	#Блок получения retailer_slug из шопсов по тт_ид
+	retailer_slug=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+	regexp_pat="^"var_in_awk"$"
+	
+	if ($1 ~ regexp_pat)
+	{
+	print $0
+	}
+	}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $3}' | tr -d '\r')
+	
+	echo retailer_slug: $retailer_slug
+	
+	
+	#Блок выбора непосредственно файла тест_категориес по retailer_slug. Блок использует регулярку в условии. В имя каждого файла тест_категориес внесён паттерн по которому ищет регулярка в теле скрипта. Включена она в имя файла тест_категориес просто для понимания
+	
+	if [[ $retailer_slug == *ulybkaradugi* ]]
+	then
+		test_categ_file="test_categories_ulybkaradugi.csv"
+		echo test_categ_file: $test_categ_file
+		
+		
+	elif [[ $retailer_slug == *okey* ]]
+	then
+		test_categ_file="test_categories_okey.csv"
+		echo test_categ_file: $test_categ_file
+	
+	
+	fi
+	
+
+else
+
+ echo "user_input_tt_id: none"
+
+fi
+
+}
+
+choice_test_categ
+ echo test_categ_file out func: $test_categ_file
+
+
+
+	#Блок получения рандомной категории по имени файла тест_категориес. В сбере в блок передаётся на вход имя файла с категориями в виде переменной test_categ_file. Блок работает с этой переменной и не работает без неё
+
+
+
+	#Считает количество строк в файле. В wc можно передать переменную только через cat "$name" (есть другие способы, но они не работают)
+
+count_str_in_file=$(cat "$test_categ_file" | wc -l | awk '{print $1}')
+	echo count_str_in_file: $count_str_in_file
+
+if [ "$test_categ_file" = "test_categories_ulybkaradugi.csv" ]
+	then
+		
+
+		randome="$(( $RANDOM % $count_str_in_file + 1 ))"
+		categ_id=$(cat "$test_categ_file" | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
+		echo categ_id: $categ_id
+
+		#Запись рандомной категории в джсон
+		#jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
+
+		
+		
+	elif [ "$test_categ_file" = "test_categories_okey.csv" ]
+	then
+		randome="$(( $RANDOM % $count_str_in_file + 1 ))"
+		categ_id=$(cat "$test_categ_file" | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
+		echo categ_id: $categ_id
+
+		#Запись рандомной категории в джсон 
+		#jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
+	
+	
+	fi
+
+
+
+  #Блок получения и записи тт_ид
+
+if [ -n "$user_input_tt_id" ]
+then
+echo user_input_tt_id: $user_input_tt_id
+
+  #Блок записи тт_ид (если введена)
+  
+#jq --arg d "${user_input_tt_id}" '.shops[0].id = $d' config.json > "tmp" && mv "tmp" config.json
+
+else
+echo "user_input_tt_id: none"
+
+fi
+
+
+ 
+  #Блок запуска
+
+if [ -n "$categ_id" ]
+then
+
+	sleep 2s
+	#pipenv run bash run.sh 
+
+else
+	echo "не найдена тестовая категория, парсер не запущен"
+	
+fi
+
+
+#-----------------2023-08-10
+#Кейс: битва с кавычками
+#i=1234
+
+#jq --argjson d "$i" '.chain_id = $d' config.json #работает - пишет число в поле чайн_ид
+
+#jq --argjson d "$categ_id" '.shops[0].categories[0] = $d' config.json #работает на реальном примере
+
+
+
+#---------------2023-08-18
+#Кейс: поиск по вхождения в файл через grep -e (регуоярка), с использованием переменной - кратко: двойные кавычки или как на примере
+#find `echo "${searchpath}"` -type f -print0 | xargs -0 grep -l -E '"${string1}".*"${string2}".*"${string3}"'
+
+
+#Кейс: удаление специсмволов
+#tr -d '\r' - видит спецсимволы и удаляет их
+#cat shops.csv | grep -e "$user_input_tt_id" | awk 'BEGIN{FS=";"}{print $8}' | tr -d '\r'
+# od -c - показывает все спецсимволы и их запись в виде нулей и единиц
+
+
+#Кейс: получить номер строки, в которой есть вхождение тт_ид, но вхождение тт_ид может быть и в координатах - потмоу сначало надо отфильтровать файл и оставить только тт_ид и строку
+#А потом взять номер строки, вытащить строку по номеру и уже из этой строки - вытащить рег_ид
+ 
+ #блок получения номера строки, содержащий тт_ид - тт_ид встречается в координатах, потом греп может давать много строк. Логика фильтрует строки по 2-му столбцу и берёт номер строки
+
+#str_num=$(cat shops.csv | awk 'BEGIN{FS=";"}{print $2,FNR}' | grep -E "${user_input_tt_id}" | awk '{print $2}')
+#echo str_num $str_num
+
+  #Блок получения рег_ид из строки с номером str_num
+#reg_id=$(cat shops.csv | sed -n "$str_num p" | awk 'BEGIN{FS=";"}{print $8}')
+#echo reg_id: $reg_id
+
+
+  #Кейс: использование расширенных регулярный выражений в греп, с переменными
+#cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^${user_input_tt_id}$"
+#cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^262$"
+
+
+  #Кейс: полу
+    #блок получения номера строки, содержащий тт_ид - тт_ид встречается в координатах, потом греп может давать много строк. Логика фильтрует строки по 2-му столбцу, 
+    #выводит все строки файла в "виде ттид_номерстроки" - в этом выводе присутствует нижнее подчёркивание, далее греп ищет по тт_ид в начале и _ нижнему подчёрккиванию вконце (чтобы отфильтровать входления коротких тт ид в другие номера, например 262)
+    #Далее из вывода записывается только номер строки в переменную стр_нум
+	
+
+#str_num=$(cat shops.csv | awk 'BEGIN{FS=";"; OFS="_"}{print $2,FNR}' | grep -E "^${user_input_tt_id}_" | awk 'BEGIN{FS="_"}{print $2}')
+
+#------------2023-08-28
+#Переменную засунуть в wc -l
+
+#count_str_in_file=$(wc -l <<< "$test_categ_file" | awk '{print $1}')
+
+#if ($1 ~ regexp_pat)
+
+
+
+
+
+

@@ -1,0 +1,36 @@
+#!/bin/bash
+#Задача: найти и отобрать все парсеры с тегом pd_all и email начинающимся на prs_loader_ и взять у них файлы CSV со штампом времени модификации меньше текущей даты (вчера и все остальные)
+
+function for_loop { 
+
+for f in $(find /home/myadmin/parsers_reg_* -maxdepth 2 -type d)
+
+do
+        echo "pwd:" $f
+        if [ -d $f  -a ! -h $f ]  
+        then  
+            cd -- "$f"  
+			
+			
+			if [ -n "$(jq '.done_notifier.email.to[]' config.json | grep -e '.*prs_loader.*')" ] && [ -n "$(jq '.parser_id' config.json | grep -e '.*pd_all.*')" ]
+			then
+
+			
+				
+				cd out/
+		
+				#find . -daystart -mtime -90 -name "*.csv" -size +520c -type f -exec cp {} /home/myadmin/parsers_reg_0*/find_scv_1 \;
+
+				
+		
+			fi	
+			
+		
+			fi
+		
+		
+done 
+}
+for_loop
+
+

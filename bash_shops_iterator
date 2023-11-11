@@ -1,0 +1,55 @@
+#!/bin/bash
+#Зайти в каждую папку, собрать из корня цсв, отфильтровать цсв по уникальным значениям. В данном случае используется awk. Сорт при этом портит строки, если в строке есть ; он начинает новую строку
+
+: > /home/myadmin/parsers_reg_075/shops_parsers/5ka/test_shops.csv
+
+function for_loop { 
+
+for f in $(find /home/myadmin/parsers_reg_075/shops_parsers/5ka -maxdepth 1 -type d)
+
+
+do
+        
+        if [ -d $f  -a ! -h $f ]  
+        then  
+            cd -- "$f"  
+			if [ "$(ls | grep Pipfile.dist)" = "Pipfile.dist" ]
+	
+			then
+				
+			
+				
+			
+				
+				name_of_csv=$(find . -maxdepth 1 -type f -name "shops.csv")
+				cat $name_of_csv >> /home/myadmin/parsers_reg_075/shops_parsers/5ka/test_shops.csv
+				
+				
+			fi
+				
+				
+			
+		fi  
+		
+done 
+}
+for_loop
+
+
+function awk_fix_headers { 
+
+cd /home/myadmin/parsers_reg_075/shops_parsers/5ka
+#awk -F '[;]' '$1=="tt_id" && FNR != 1 {next} {print}' test_shops.csv | sort -ur -t ";" -k1,1 > shops_fix_headers.csv #сорт криво выводит, не по порядку строки, хз почему
+
+#awk 'BEGIN{FS=";"} $1=="tt_id" && FNR != 1 {next} {print}' test_shops.csv > shops_fix_headers.csv #работает
+
+awk 'BEGIN{FS=";"} !a[$1]++' test_shops.csv > shops_fix_headers.csv #работает
+
+}
+awk_fix_headers
+
+#------------
+#Фильтрация по уникальным значениям - элемент встречается, записывается в массив и принтится (вся строка), при последующих встречах он будет найден в массиве и строка будет пропущена. Можно использовать как по элементу, так и по всей строке $0
+#awk 'BEGIN{FS=";"} !a[$1]++' test_shops.csv > shops_fix_headers.csv #работает
+
+

@@ -1,0 +1,133 @@
+#!/bin/bash
+#Блок получения рандомной категории
+
+  #авк обрезает выход от вс -л - он содержит полезную информацию только в $1
+count_str_in_file=$(wc -l test_categories.csv | awk '{print $1}')
+  #echo count_str_in_file: $count_str_in_file
+
+randome="$(( $RANDOM % $count_str_in_file + 1 ))"
+categ_id=$(cat test_categories.csv | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
+echo categ_id: $categ_id
+
+  #Запись рандомной категории в джсон
+
+jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
+
+
+
+  #Блок получения и записи тт_ид
+
+user_input_tt_id=$1
+if [ -n "$user_input_tt_id" ]
+then
+echo user_input_tt_id: $user_input_tt_id
+
+  #Блок записи тт_ид (если введена)
+  
+jq --argjson d "${user_input_tt_id}" '.shops[0].ids[0] = $d' config.json > "tmp" && mv "tmp" config.json
+
+else
+echo "user_input_tt_id: none"
+
+fi
+
+	#Блок работы с координатами
+
+if [ -n "$user_input_tt_id" ]
+then
+lat_coord=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+if ($1 ~ var_in_awk)
+{
+print $0
+}
+}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $5}' | tr -d '\r')
+
+lon_coord=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+if ($1 ~ var_in_awk)
+{
+print $0
+}
+}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $6}' | tr -d '\r')
+
+addr_in_csv=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+if ($1 ~ var_in_awk)
+{
+print $0
+}
+}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $4}' | tr -d '\r' | tr -d '"')
+
+echo lat_coord: $lat_coord lon_coord: $lon_coord addr_in_csv: $addr_in_csv
+
+
+	#запись полученных координат в джсон и адреса
+
+jq --argjson k "${lat_coord}" '.shops[0].lat = $k' config.json > "tmp" && mv "tmp" config.json
+jq --argjson k "${lon_coord}" '.shops[0].lng = $k' config.json > "tmp" && mv "tmp" config.json
+jq --arg k "${addr_in_csv}" '.shops[0].address = $k' config.json > "tmp" && mv "tmp" config.json
+
+
+fi
+
+
+
+  #Блок запуска
+
+sleep 2s
+#pipenv run bash run.sh 
+
+
+
+#-----------------2023-08-10
+#Кейс: битва с кавычками
+#i=1234
+
+#jq --argjson d "$i" '.chain_id = $d' config.json #работает - пишет число в поле чайн_ид
+
+#jq --argjson d "$categ_id" '.shops[0].categories[0] = $d' config.json #работает на реальном примере
+
+
+
+#---------------2023-08-18
+#Кейс: поиск по вхождения в файл через grep -e (регуоярка), с использованием переменной - кратко: двойные кавычки или как на примере
+#find `echo "${searchpath}"` -type f -print0 | xargs -0 grep -l -E '"${string1}".*"${string2}".*"${string3}"'
+
+
+#Кейс: удаление специсмволов
+#tr -d '\r' - видит спецсимволы и удаляет их
+#cat shops.csv | grep -e "$user_input_tt_id" | awk 'BEGIN{FS=";"}{print $8}' | tr -d '\r'
+# od -c - показывает все спецсимволы и их запись в виде нулей и единиц
+
+
+#Кейс: получить номер строки, в которой есть вхождение тт_ид, но вхождение тт_ид может быть и в координатах - потмоу сначало надо отфильтровать файл и оставить только тт_ид и строку
+#А потом взять номер строки, вытащить строку по номеру и уже из этой строки - вытащить рег_ид
+ 
+ #блок получения номера строки, содержащий тт_ид - тт_ид встречается в координатах, потом греп может давать много строк. Логика фильтрует строки по 2-му столбцу и берёт номер строки
+
+#str_num=$(cat shops.csv | awk 'BEGIN{FS=";"}{print $2,FNR}' | grep -E "${user_input_tt_id}" | awk '{print $2}')
+#echo str_num $str_num
+
+  #Блок получения рег_ид из строки с номером str_num
+#reg_id=$(cat shops.csv | sed -n "$str_num p" | awk 'BEGIN{FS=";"}{print $8}')
+#echo reg_id: $reg_id
+
+
+  #Кейс: использование расширенных регулярный выражений в греп, с переменными
+#cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^${user_input_tt_id}$"
+#cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^262$"
+
+
+  #Кейс: полу
+    #блок получения номера строки, содержащий тт_ид - тт_ид встречается в координатах, потом греп может давать много строк. Логика фильтрует строки по 2-му столбцу, 
+    #выводит все строки файла в "виде ттид_номерстроки" - в этом выводе присутствует нижнее подчёркивание, далее греп ищет по тт_ид в начале и _ нижнему подчёрккиванию вконце (чтобы отфильтровать входления коротких тт ид в другие номера, например 262)
+    #Далее из вывода записывается только номер строки в переменную стр_нум
+	
+
+#str_num=$(cat shops.csv | awk 'BEGIN{FS=";"; OFS="_"}{print $2,FNR}' | grep -E "^${user_input_tt_id}_" | awk 'BEGIN{FS="_"}{print $2}')
+
+
+
+
+
+
+
+

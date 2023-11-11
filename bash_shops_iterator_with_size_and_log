@@ -1,0 +1,98 @@
+#!/bin/bash
+#Пройтись по папкам, зайти в аут, цикл по цсв, если цсв больше 20килобайт, то брать из неё шопсы и копировать в общий шопс. Так же небольшое логирование
+
+: > /home/myadmin/parsers_reg_075/shops_parsers/5k_dostavka/test_shops.csv
+
+function for_loop { 
+
+for f in $(find /home/myadmin/parsers_reg_075/shops_parsers/5k_dostavka -maxdepth 1 -type d)
+
+
+do
+        
+        if [ -d $f  -a ! -h $f ]  
+        then  
+            cd -- "$f"  
+			if [ "$(ls | grep Pipfile.dist)" = "Pipfile.dist" ]
+	
+			then
+				
+			
+				
+			
+				
+				
+				cd out/
+				size_flag="0"
+				count_csv=$(find . -maxdepth 1 -type f -name "*.csv" | wc -l)
+				count_for=0
+				null_flag="0"
+				
+					
+				for shops in $(find . -maxdepth 1 -type f -name "*.csv")
+				do
+					let count_for=count_for+1
+					shop_one=$(find "$shops" -size +20c -name "*.csv" -type f)
+					
+					shop_size=$(find "$shops" -size +520c -name "*.csv" -type f)
+						
+					if [ -n "$shop_size" ]
+					then
+						size_flag="1"
+					fi
+						
+			
+					if [ -n "$shop_one" ]
+					then
+						cat $shop_one >> /home/myadmin/parsers_reg_075/shops_parsers/5k_dostavka/test_shops.csv
+						null_flag="1"	
+						
+						
+					fi
+						
+						#echo "count_for : " $count_for 
+					if [ "$count_csv" = "$count_for" ]				
+					then
+					
+						if [ "$null_flag" = "1" ]
+						then
+							#echo "что-то найдено"
+							
+							if [ "$size_flag" = "0" ]
+							then
+								echo $f "мало"
+							else
+								echo $f "найдено, много"
+							fi
+						else
+							echo $f "пустые цсв"
+						fi
+							
+					fi
+					
+				done
+			fi
+				
+				
+			
+		fi  
+		
+done 
+}
+for_loop
+
+
+function awk_fix_headers { 
+
+cd /home/myadmin/parsers_reg_075/shops_parsers/5k_dostavka
+#awk -F '[;]' '$1=="tt_id" && FNR != 1 {next} {print}' test_shops.csv | sort -ur -t ";" -k1,1 > shops_fix_headers.csv
+
+#awk 'BEGIN{FS=";"} $1=="tt_id" && $2=="retailer_name" && FNR != 1 {next} {print}' shops_old.csv > test_shops_2.csv
+
+awk 'BEGIN{FS=";"} !a[$1]++' test_shops.csv > shops_fix_headers.csv #работает
+
+}
+awk_fix_headers
+
+
+

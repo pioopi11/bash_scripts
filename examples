@@ -1,0 +1,73 @@
+#---------
+#find /home/myadmin/parsers_reg_* -maxdepth 2 -type d -name "dmr_*" | wc -l
+#find /home/myadmin/parsers_reg_*/pd_ -maxdepth 1 -type d -regex '.*\/per_.*' | wc -l #аботает
+
+
+#awk -F '[;]' '$1=="id" && FNR != 1 {next} {print}' test_shops.csv > test_shops_2.csv #можно задать несколько разделителей в ключе -F '[;:]'
+#awk 'BEGIN{FS=";|:"} $1=="id" && $2=="retailer_name" && FNR != 1 {next} {print}' shops_old.csv > test_shops_2.csv #делает тоже самое, но разделители указаны в поле Бегин через пайплайн
+
+
+#-----
+date
+
+#Задать дату на две недели назад
+two_weeks_ago=$(date +"%Y-%m-%d" -d "- 14 days")
+
+#Удалить младше 14 дней
+find "${SCRIPT_DIR}" -type f -name "*.gz" -mtime +14 -print -delete
+
+#find_scv_1 \; - дата, размер (с - это байты, пустые файлы это 520 байт), с датой заморочки - сейчас это 90 дней назад и кроме сегодня
+find . -daystart -mtime -90 -name "*.csv" -size +520c -type f -exec cp {} /home/myadmin/parsers_reg_0*/
+
+#Самый старый файл в каталоге - при этом время поиска "только вчера". Авк для фильтрации вывода
+crontab $(find /home/myadmin/srvapi/csw_api/temp -daystart -mtime 0 -name "*.bak" -type f -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+
+
+#------------
+#if [[ $conf_mail == *prs_loader* ]] - использование регулярок
+
+
+#--------------
+awk
+
+#Кейс:Вывод по номеру строки
+awk 'FNR == 2 {print}'
+
+#Кейс: Использование регулярок в awk
+#retailer_slug=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+#	regexp_pat="^"var_in_awk"$"
+#	
+#	if ($1 ~ regexp_pat)
+#	{
+#	print $0
+#	}
+#	}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $3}' | tr -d '\r')
+#	echo retailer_slug: $retailer_slug
+
+#Кейс: Фильтрация по уникальным значениям - элемент встречается, записывается в массив и принтится (вся строка), при последующих встречах он будет найден в массиве и строка будет пропущена. Можно использовать как по элементу, так и по всей строке $0
+#awk 'BEGIN{FS=";"} !a[$1]++' test_shops.csv > shops_fix_headers.csv #работает
+
+
+#------
+#Три самых нагруженных процесса, один самый нагруженный процесс
+
+#ps -eo rss,pid,cmd --sort -rss | head -2 | tail -1 | awk 'BEGIN{OFS=" +++ "}{printf "%.0f:-- ", $1 / 1024}{print $3, $4}'
+#ps -eo rss,pid,cmd --sort -rss | head -4 | tail -3 | awk 'BEGIN{OFS=" +++ "}{printf "%.0f:-- ", $1 / 1024}{print $3, $4}'
+
+#вывести все строки, начинающиеся с d 
+#ls -l /var/log | grep "^d" | wc -l 
+
+
+#------------
+find, grep
+
+#Кейс: find -print 0 ... | xargs -0
+#Кейс: поиск по вхождению в файл через grep -e (регулярка), с использованием переменной
+#find `echo "${searchpath}"` -type f -print0 | xargs -0 grep -l -E '"${string1}".*"${string2}".*"${string3}"'
+
+#Кейс: использование расширенных регулярный выражений в греп, с переменными
+#cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^${user_input_tt_id}$"
+#cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^262$"
+
+
+

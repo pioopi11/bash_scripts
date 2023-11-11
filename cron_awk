@@ -1,0 +1,95 @@
+#!/bin/bash
+crontab -l > mycron
+crontab -l > mycron_before_awk.bak
+
+#work! Так как ран.сш это разделитель, то он его не пишет, но добавляет на выходе. Но кейс тут в том, что если в строке 2 раза ран.сш, то скрипт выведет две строки. Срабатывает только для строк, где 2 раза ран.сш
+cat mycron | awk 'BEGIN{FS="run\.sh"}{
+if ($0~/.*run\.sh.*run\.sh.*/){
+for (i = 1; i < NF; i++){
+print $i "run.sh"
+}
+}
+else
+{print $0}
+}' 
+
+
+#-----example
+#Поиск нужной строки, с междустрочным выводом в виде плюсов - чтобы ансибл в одну строку вернул. Принтит элемент строки после cd
+cat mycron | awk 'BEGIN{ORS="+++"}{
+if ($0~/.*run\.sh.*run\.sh.*/){
+for (i = 1; i < NF; i++){
+if ($i~/cd/)
+print $(i+1)
+}
+}
+}' 
+
+
+#work! Так как ран.сш это разделитель, то он его не пишет, но добавляет на выходе. Но кейс тут в том, что если в строке 2 раза ран.сш, то скрипт выведет две строки
+cat mycron | awk 'BEGIN{FS="run.sh"}{
+for (i = 1; i < NF; i++){
+print $i "run.sh"
+}
+}'
+
+
+#cron_awk_if_AND_many_OR
+function awk_loop {
+crontab -l > mycron
+crontab -l > mycron.bak
+cat mycron | awk '{
+if ($0 ~ "^#" && ($2=="*" || $3=="*" || $4=="*" || $5=="*" || $6=="*"))
+{
+{next}
+}
+else
+{
+{print $0}
+}
+
+}' > mycron_new
+
+crontab mycron_new
+
+}
+awk_loop
+
+
+#cron_awk_if_a-z_and_a-z
+crontab -l > mycron
+cat mycron | awk 'BEGIN{FS="cd /home/myadmin"; ORS="+++"}{
+if ($2 ~ "[a-z]" && $3 ~ "[a-z]")
+{
+{print $2}
+}
+else
+{
+{next}
+}
+
+}' | tr -d "*" | tr -d "&&" | tr -d "#"
+
+
+
+#Закоментировать все /sm, без звёдочек 
+function awk_loop {
+crontab -l > mycron
+#crontab -l > mycron.bak
+cat mycron | awk '{
+if ($0 !~ "^#" && $0 ~ "/sm_")
+{
+{print "#"$0}
+}
+else
+{
+{print $0}
+}
+
+}' > mycron_new
+
+crontab mycron_new
+
+}
+awk_loop
+
