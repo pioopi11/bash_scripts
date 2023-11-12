@@ -1,33 +1,18 @@
 #!/bin/bash
 
 function for_loop { 
-for f in $(find /home/myadmin/parsers_reg_* -maxdepth 2 -type d | awk '$1 ~ /zvr_/ && $1 !~ /vl/ {print $0}')
-
-do
-        
+	for f in $(find /home/myadmin/parsers_reg_* -maxdepth 2 -type d | awk '$1 ~ /zvr_/ && $1 !~ /vl/ {print $0}')
+	do
         if [ -d $f  -a ! -h $f ]  
         then  
             cd -- "$f"  
 			if [ "$(ls | grep Pipfile.dist)" = "Pipfile.dist" ]
-			#if [ -n "$(ls | grep config.json)" ]
 			then
 				
-			
 				pwd
 			
-				
-				
 			fi	
 		fi  
-		
-done 
+	done 
 }
 for_loop
-
-
-#---------
-#find /home/myadmin/parsers_reg_* -maxdepth 2 -type d -name "dmr_*" | wc -l
-#find /home/myadmin/parsers_reg_*/pd_ -maxdepth 1 -type d -regex '.*\/per_.*' | wc -l #аботает
-
-#awk -F '[;]' '$1=="id" && FNR != 1 {next} {print}' test_shops.csv > test_shops_2.csv #можно задать несколько разделителей в ключе -F '[;:]'
-#awk 'BEGIN{FS=";|:"} $1=="id" && $2=="retailer_name" && FNR != 1 {next} {print}' shops_old.csv > test_shops_2.csv #делает тоже самое, но разделители указаны в поле Бегин через пайплайн

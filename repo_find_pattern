@@ -1,0 +1,27 @@
+#!/bin/bash
+#Задача: пройтись по всем папкам (репозиториям) и найти в файле с кодом некий паттерн
+function for_loop { 
+    for f in $(find /home/myadmin/docs/bash_projekt/git_folder -maxdepth 1 -type d)
+    do
+        
+        if [ -d $f  -a ! -h $f ]  
+        then  
+            cd -- "$f"  
+            echo $f
+            if [ -z $(find . -maxdepth 1 -type f -name "get_shop*py") ]
+            then
+                echo $f "; get_shop не найден"
+            else
+			    if [ $(cat get_shops* | grep start_job) ] || [ $(cat get_shops* | grep save_to_file) ]
+                then
+                    echo $(basename $f)"; есть"
+                else
+                    echo $(basename $f)"; нет"
+                fi
+            fi
+     
+        fi
+    done 
+}
+for_loop
+

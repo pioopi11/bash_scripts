@@ -1,65 +1,57 @@
 #!/bin/bash
-  #Считает количество строк в файле. авк обрезает выход от вс -л - он содержит полезную информацию только в $1
+#---Блок получения рандомной категории
+#Считает количество строк в файле. авк обрезает выход от вс -л - он содержит полезную информацию только в $1
 count_str_in_file=$(wc -l test_categories.csv | awk '{print $1}')
-  #echo count_str_in_file: $count_str_in_file
+#echo count_str_in_file: $count_str_in_file
 
 randome="$(( $RANDOM % $count_str_in_file + 1 ))"
 categ_id=$(cat test_categories.csv | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
 echo categ_id: $categ_id
 
-  #Запись рандомной категории в джсон
-
+#Запись рандомной категории в джсон
 #jq --arg d ${categ_id} '.shops.categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
 
 
-
-  #Блок получения и записи тт_ид
-
+#---Блок получения и записи тт_ид
 user_input_tt_id=$1
 if [ -n "$user_input_tt_id" ]
 then
 	echo user_input_tt_id: $user_input_tt_id
 
 	#Блок записи тт_ид (если введена)
-  
 	jq --arg d "${user_input_tt_id}" '.shops.id = $d' config.json > "tmp" && mv "tmp" config.json
 
 else
 	echo "user_input_tt_id: none"
 
-
 fi
 
 
-  #Блок получения и записи региона - ищет строку по введённому человеком тт_ид, из строки вынимает регион_ид, удаляет символ возврата коретки; так же вынимает имя региона. Если не введён тт_ид, не отрабатывает
-
+#---Блок получения и записи региона - ищет строку по введённому человеком тт_ид, из строки вынимает регион_ид, удаляет символ возврата коретки; так же вынимает имя региона. Если не введён тт_ид, не отрабатывает
 if [ -n "$user_input_tt_id" ]
 then
 
 	#Блок получения регион_ид через awk
-	
-reg_id=$(cat shops.csv | awk 'BEGIN{FS=";"}{
-if ($2 ~ var_in_awk)
-{
-print $0
-}
-}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $8}' | tr -d '\r')
+	reg_id=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+	if ($2 ~ var_in_awk)
+	{
+	print $0
+	}
+	}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $8}' | tr -d '\r')
 
-echo reg_id: $reg_id
+	echo reg_id: $reg_id
 
-  #Блок записи рег_ид в конфиг; регнэйм при этом не пишется, а просто выводится на экран для простоты дебага
-  
-#jq --arg d "${reg_id}" '.shops.region_id = $d' config.json > "tmp" && mv "tmp" config.json
+	#Блок записи рег_ид в конфиг; регнэйм при этом не пишется, а просто выводится на экран для простоты дебага
+  jq --arg d "${reg_id}" '.shops.region_id = $d' config.json > "tmp" && mv "tmp" config.json
 
 fi
 
-  #Блок запуска
-
+#---Блок запуска
 if [ -n "$reg_id" ]
 then
 
-sleep 2s
-#pipenv run bash run.sh 
+	sleep 2s
+	#pipenv run bash run.sh 
 
 else
 	echo "Парсер не запущен" 

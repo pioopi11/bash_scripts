@@ -1,24 +1,21 @@
 #!/bin/bash
 user_input_tt_id=$1
-	#Блок работы с шопс.цсв по тт_ид, выбирает из какого файла тест_категориес читать категории для проверки (файл тест_кетагориес уникален для каждой сети)
+#---Блок работы с шопс.цсв по тт_ид, выбирает из какого файла тест_категориес читать категории для проверки (файл тест_кетагориес уникален для каждой сети)
 	
 function choice_test_categ() { 
+	if [ -n "$user_input_tt_id" ]
+	then
 
-if [ -n "$user_input_tt_id" ]
-then
-
-	#Блок получения retailer_slug из шопсов по тт_ид
-	retailer_slug=$(cat shops.csv | awk 'BEGIN{FS=";"}{
-	regexp_pat="^"var_in_awk"$"
+		#---Блок получения retailer_slug из шопсов по тт_ид
+		retailer_slug=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+		regexp_pat="^"var_in_awk"$"
 	
-	if ($1 ~ regexp_pat)
-	{
-	print $0
-	}
-	}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $3}' | tr -d '\r')
-	
-	echo retailer_slug: $retailer_slug
-	
+		if ($1 ~ regexp_pat)
+		{
+		print $0
+		}
+		}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $3}' | tr -d '\r')
+		echo retailer_slug: $retailer_slug
 	
 	#Блок выбора непосредственно файла тест_категориес по retailer_slug. Блок использует регулярку в условии. В имя каждого файла тест_категориес внесён паттерн по которому ищет регулярка в теле скрипта. Включена она в имя файла тест_категориес просто для понимания
 	
@@ -32,79 +29,57 @@ then
 	then
 		test_categ_file="test_categories_okey.csv"
 		echo test_categ_file: $test_categ_file
-	
-	
 	fi
 	
 
-else
-
- echo "user_input_tt_id: none"
-
-fi
+	else
+		echo "user_input_tt_id: none"
+	fi
 
 }
-
 choice_test_categ
- echo test_categ_file out func: $test_categ_file
+echo test_categ_file out func: $test_categ_file
 
-
-
-	#Блок получения рандомной категории по имени файла тест_категориес. В сбере в блок передаётся на вход имя файла с категориями в виде переменной test_categ_file. Блок работает с этой переменной и не работает без неё
-
-
+#---Блок получения рандомной категории по имени файла тест_категориес. В сбере в блок передаётся на вход имя файла с категориями в виде переменной test_categ_file. Блок работает с этой переменной и не работает без неё
 
 	#Считает количество строк в файле. В wc можно передать переменную только через cat "$name" (есть другие способы, но они не работают)
-
-count_str_in_file=$(cat "$test_categ_file" | wc -l | awk '{print $1}')
-	echo count_str_in_file: $count_str_in_file
+count_str_in_file=$(cat "$test_categ_file" | wc -l)
+echo count_str_in_file: $count_str_in_file
 
 if [ "$test_categ_file" = "test_categories_ulybkaradugi.csv" ]
-	then
+then
+	randome="$(( $RANDOM % $count_str_in_file + 1 ))"
+	categ_id=$(cat "$test_categ_file" | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
+	echo categ_id: $categ_id
+
+	#Запись рандомной категории в джсон
+	jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
 		
+elif [ "$test_categ_file" = "test_categories_okey.csv" ]
+then
+	randome="$(( $RANDOM % $count_str_in_file + 1 ))"
+	categ_id=$(cat "$test_categ_file" | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
+	echo categ_id: $categ_id
 
-		randome="$(( $RANDOM % $count_str_in_file + 1 ))"
-		categ_id=$(cat "$test_categ_file" | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
-		echo categ_id: $categ_id
-
-		#Запись рандомной категории в джсон
-		#jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
-
-		
-		
-	elif [ "$test_categ_file" = "test_categories_okey.csv" ]
-	then
-		randome="$(( $RANDOM % $count_str_in_file + 1 ))"
-		categ_id=$(cat "$test_categ_file" | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
-		echo categ_id: $categ_id
-
-		#Запись рандомной категории в джсон 
-		#jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
+	#Запись рандомной категории в джсон 
+	jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
 	
-	
-	fi
+fi
 
-
-
-  #Блок получения и записи тт_ид
-
+#---Блок получения и записи тт_ид
 if [ -n "$user_input_tt_id" ]
 then
-echo user_input_tt_id: $user_input_tt_id
+	echo user_input_tt_id: $user_input_tt_id
 
-  #Блок записи тт_ид (если введена)
-  
-#jq --arg d "${user_input_tt_id}" '.shops[0].id = $d' config.json > "tmp" && mv "tmp" config.json
+    #Блок записи тт_ид (если введена)
+	jq --arg d "${user_input_tt_id}" '.shops[0].id = $d' config.json > "tmp" && mv "tmp" config.json
 
 else
-echo "user_input_tt_id: none"
+	echo "user_input_tt_id: none"
 
 fi
 
-
- 
-  #Блок запуска
-
+#---Блок запуска
 if [ -n "$categ_id" ]
 then
 
@@ -115,6 +90,3 @@ else
 	echo "не найдена тестовая категория, парсер не запущен"
 	
 fi
-
-
-

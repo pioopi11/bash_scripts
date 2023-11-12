@@ -1,11 +1,6 @@
 #---------
-#find /home/myadmin/parsers_reg_* -maxdepth 2 -type d -name "dmr_*" | wc -l
-#find /home/myadmin/parsers_reg_*/pd_ -maxdepth 1 -type d -regex '.*\/per_.*' | wc -l #аботает
-
-
-#awk -F '[;]' '$1=="id" && FNR != 1 {next} {print}' test_shops.csv > test_shops_2.csv #можно задать несколько разделителей в ключе -F '[;:]'
-#awk 'BEGIN{FS=";|:"} $1=="id" && $2=="retailer_name" && FNR != 1 {next} {print}' shops_old.csv > test_shops_2.csv #делает тоже самое, но разделители указаны в поле Бегин через пайплайн
-
+#Если строка пустая, тогда срабатывает then, если не пустая то срабатывает else. Это работает лучше чем -n - это условие валится, если в поиске find больше 1-го файла и в принципе оно показывает всегда тру
+if [ -z $(find . -maxdepth 1 -type f -name "get_shop*.py") ]
 
 #-----
 date
@@ -30,19 +25,28 @@ crontab $(find /home/myadmin/srvapi/csw_api/temp -daystart -mtime 0 -name "*.bak
 #--------------
 awk
 
+#Убрать дубли шапок, отсортировать по уникальным, используя первый столбец
+awk -F '[;]' '$1=="tt_id" && FNR != 1 {next} {print}' test_shops.csv | sort -ur -t ";" -k1,1 > shops_fix_headers.csv #сорт криво выводит, не по порядку строки, хз почему
+awk 'BEGIN{FS=";"} $1=="tt_id" && FNR != 1 {next} {print}' test_shops.csv > shops_fix_headers.csv #работает
+awk 'BEGIN{FS=";"} !a[$1]++' test_shops.csv > shops_fix_headers.csv #работает
+
+#Указать разделитель или несколько разделителей
+awk -F '[;]' '$1=="id" && FNR != 1 {next} {print}' test_shops.csv > test_shops_2.csv #можно задать несколько разделителей в ключе -F '[;:]'
+awk 'BEGIN{FS=";|:"} $1=="id" && $2=="retailer_name" && FNR != 1 {next} {print}' shops_old.csv > test_shops_2.csv #делает тоже самое, но разделители указаны в поле Бегин через пайплайн
+
 #Кейс:Вывод по номеру строки
 awk 'FNR == 2 {print}'
 
 #Кейс: Использование регулярок в awk
-#retailer_slug=$(cat shops.csv | awk 'BEGIN{FS=";"}{
-#	regexp_pat="^"var_in_awk"$"
-#	
-#	if ($1 ~ regexp_pat)
-#	{
-#	print $0
-#	}
-#	}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $3}' | tr -d '\r')
-#	echo retailer_slug: $retailer_slug
+retailer_slug=$(cat shops.csv | awk 'BEGIN{FS=";"}{
+	regexp_pat="^"var_in_awk"$"
+	
+	if ($1 ~ regexp_pat)
+	{
+	print $0
+	}
+	}' var_in_awk="${user_input_tt_id}" | awk 'BEGIN{FS=";"}{print $3}' | tr -d '\r')
+	echo retailer_slug: $retailer_slug
 
 #Кейс: Фильтрация по уникальным значениям - элемент встречается, записывается в массив и принтится (вся строка), при последующих встречах он будет найден в массиве и строка будет пропущена. Можно использовать как по элементу, так и по всей строке $0
 #awk 'BEGIN{FS=";"} !a[$1]++' test_shops.csv > shops_fix_headers.csv #работает
@@ -61,13 +65,18 @@ awk 'FNR == 2 {print}'
 #------------
 find, grep
 
-#Кейс: find -print 0 ... | xargs -0
-#Кейс: поиск по вхождению в файл через grep -e (регулярка), с использованием переменной
+#Кейс: подсчитать количество по паттерну
+#find /home/myadmin/parsers_reg_* -maxdepth 2 -type d -name "dmr_*" | wc -l
+#find /home/myadmin/parsers_reg_*/pd_ -maxdepth 1 -type d -regex '.*\/per_.*' | wc -l #аботает
+
+#Кейс: поиск по вхождению в файл через grep -e (регулярка), с использованием переменной &&  find -print 0 ... | xargs -0
 #find `echo "${searchpath}"` -type f -print0 | xargs -0 grep -l -E '"${string1}".*"${string2}".*"${string3}"'
 
 #Кейс: использование расширенных регулярный выражений в греп, с переменными
 #cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^${user_input_tt_id}$"
 #cat shops.csv | awk 'BEGIN{FS=";"}{print $2}' | grep -E "^262$"
 
+#Кейс:Найти все папки по паттерну и подсчитать их количество
+find /home/myadmin/parsers_reg_* -maxdepth 2 -type d | awk '$1 ~ /mgk_/ && $1 ~ /_promo/ {print $0}' | wc -l
 
 

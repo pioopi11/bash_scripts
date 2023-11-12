@@ -1,40 +1,32 @@
 #!/bin/bash
-#Блок получения рандомной категории
+#---Блок получения рандомной категории
 
-  #Считает количество строк в файле. авк обрезает выход от вс -л - он содержит полезную информацию только в $1
+#Считает количество строк в файле. авк обрезает выход от вс -л - он содержит полезную информацию только в $1
 count_str_in_file=$(wc -l test_categories.csv | awk '{print $1}')
-  #echo count_str_in_file: $count_str_in_file
+#echo count_str_in_file: $count_str_in_file
 
 randome="$(( $RANDOM % $count_str_in_file + 1 ))"
 categ_id=$(cat test_categories.csv | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
 echo categ_id: $categ_id
 
-  #Запись рандомной категории в джсон
-
+#Запись рандомной категории в джсон
 #jq --argjson d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
 
-
-
-  #Блок получения и записи тт_ид
-
+#---Блок получения и записи тт_ид
 user_input_tt_id=$1
 if [ -n "$user_input_tt_id" ]
 then
-echo user_input_tt_id: $user_input_tt_id
+  echo user_input_tt_id: $user_input_tt_id
 
   #Блок записи тт_ид (если введена)
-  
-#jq --arg d "${user_input_tt_id}" '.shops[0].id = $d' config.json > "tmp" && mv "tmp" config.json
+  jq --arg d "${user_input_tt_id}" '.shops[0].id = $d' config.json > "tmp" && mv "tmp" config.json
 
 else
-echo "user_input_tt_id: none"
+  echo "user_input_tt_id: none"
 
 fi
 
-
- 
-  #Блок запуска
-
+#---Блок запуска
 sleep 2s
 #pipenv run bash run.sh 
 

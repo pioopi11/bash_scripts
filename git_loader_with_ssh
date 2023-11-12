@@ -1,0 +1,24 @@
+#!/bin/bash
+#Кейс: залить скриптом во все репозитории один и тот же файл. Для работы нужен список репозиториев - по нему будет цикл для скачивания. И файл, который нужно скопировать во вссе репозитории
+
+function git_loop { 
+    for i in $(cat all_repo.csv | awk -F '[;]' '{print $1}') 
+    do
+        cd /home/myadmin/docs/bash_projekt/gitea_loader/git_folder
+        #git clone ssh://mygit.../$i #подставить нужный шаблон репозитория
+        cd -- "/home/myadmin/docs/bash_projekt/gitea_loader/test_folder/$i" #переход по переменной, работает
+
+        cp -rp /home/myadmin/docs/bash_projekt/gitea_loader/run_sh_folder/run.sh /home/myadmin/docs/bash_projekt/gitea_loader/git_folder/$i/
+
+        git status
+        #рабочее тело загрузчика в гитею
+        git add .
+        git commit -m "my comment"
+        git push
+        sleep 5
+        pwd
+
+    done
+}
+git_loop
+

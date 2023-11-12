@@ -8,9 +8,8 @@ randome="$(( $RANDOM % $count_str_in_file + 1 ))"
 categ_id=$(cat test_categories.csv | awk 'BEGIN{FS=";"}{print $2}' | sed -n "$randome p" | tr -d '\r')
 echo categ_id: $categ_id
 
-  #Запись рандомной категории в джсон
-
-#jq --arg d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
+#Запись рандомной категории в джсон
+jq --arg d ${categ_id} '.shops[0].categories[0] = $d' config.json > "tmp" && mv "tmp" config.json
 
 
 
@@ -21,7 +20,7 @@ if [ -n "$user_input_tt_id" ]
     echo user_input_tt_id: $user_input_tt_id
 
     #Блок записи тт_ид (если введена)
-    #jq --arg d "${user_input_tt_id}" '.shops[0].id = $d' config.json > "tmp" && mv "tmp" config.json
+    jq --arg d "${user_input_tt_id}" '.shops[0].id = $d' config.json > "tmp" && mv "tmp" config.json
 
   else
     echo "user_input_tt_id: none"
@@ -37,7 +36,6 @@ if [ -n "$user_input_tt_id" ]
   #выводит все строки файла в "виде ттид_номерстроки" - в этом выводе присутствует нижнее подчёркивание, далее греп ищет по тт_ид в начале и _ нижнему подчёрккиванию вконце (чтобы отфильтровать входления коротких тт ид в другие номера, например 262)
   #Далее из вывода записывается только номер строки в переменную стр_нум
 	
-
   str_num=$(cat shops.csv | awk 'BEGIN{FS=";"; OFS="_"}{print $2,FNR}' | grep -E "^${user_input_tt_id}_" | awk 'BEGIN{FS="_"}{print $2}')
   #echo str_num $str_num
 
@@ -56,7 +54,6 @@ if [ -n "$user_input_tt_id" ]
   fi
 
 fi
- 
 
 #---Блок записи рег_ид в конфиг; регнэйм при этом не пишется, а просто выводится на экран для простоты дебага
 jq --arg d "${reg_id}" '.shops[0].region_id = $d' config.json > "tmp" && mv "tmp" config.json

@@ -19,29 +19,28 @@ echo $lenght
 #Пропусти цифры и первые нули в srv090, остальное склеить в новвой переменной
 for ((i=0;i<${#A};i++)); do
 #echo i=$i ${A:$i:1}
-
-if [[ ${A:$i:1} =~ ^[A-Z]$ ]] #в данном месте == не работает, нужно именно =~ что это не ясно, но видимо принадлежит последовательности, а == это соответствует последовательности (алфавиту)
-then
-:
-else
-    if [[ ${A:$i:1} == 0 && $flag_first_zeros = true ]] 
+    if [[ ${A:$i:1} =~ ^[A-Z]$ ]] #в данном месте == не работает, нужно именно =~ что это не ясно, но видимо принадлежит последовательности, а == это соответствует последовательности (алфавиту)
     then
-        echo $flag_first_zeros
-        foo="${foo}${A:$i:1}" 
+        :
     
     else
-    #echo letter or zero i=$i ${A:$i:1}
-        if [[ ${A:$i:1} =~ [1-9] ]]
+        if [[ ${A:$i:1} == 0 && $flag_first_zeros = true ]] 
         then
-            foo="${foo}${A:$i:1}"  #конотация строк в баш
-            echo numder ${A:$i:1}
-            flag_first_zeros=true
+            echo $flag_first_zeros
+            foo="${foo}${A:$i:1}" 
+    
         else
-            echo letter or first zero i=$i ${A:$i:1}
+        #echo letter or zero i=$i ${A:$i:1}
+            if [[ ${A:$i:1} =~ [1-9] ]]
+            then
+                foo="${foo}${A:$i:1}"  #конотация строк в баш
+                echo numder ${A:$i:1}
+                flag_first_zeros=true
+            else
+                echo letter or first zero i=$i ${A:$i:1}
+            fi
         fi
     fi
-fi
-
 done
 
 echo Склеенная переменная из имени сервера $foo
@@ -49,44 +48,43 @@ echo Склеенная переменная из имени сервера $foo
 #Определить, к какой группе серверов относится переменная
 if (( $foo >= 1 && $foo <=9 ))
 then
-echo srv1-9
+    echo srv1-9
 fi
 
 if (( $foo >= 10 && $foo <=19 ))
 then
-echo srv10-19
+    echo srv10-19
 fi
 
 if (( $foo >= 20 && $foo <=29 ))
 then
-echo srv20-29
+    echo srv20-29
 fi
 
 if (( $foo >= 30 && $foo <=39 ))
 then
-echo srv30-39
+    echo srv30-39
 fi
 
 if (( $foo >= 40 && $foo <=49 ))
 then
-echo srv40-49
+    echo srv40-49
 fi
 
 if (( $foo >= 50 && $foo <=59 ))
 then
-echo srv50-59
+    echo srv50-59
 fi
 
 if (( $foo >= 60 && $foo <=69 ))
 then
-echo srv60-69
+    echo srv60-69
 fi
 
 if (( $foo >= 70 && $foo <=79 ))
 then
-echo srv70-79
+    echo srv70-79
 fi
-
 
 #echo ${#A} #example
 #echo ${A:7:1} #example

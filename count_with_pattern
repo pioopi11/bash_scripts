@@ -1,3 +1,2 @@
 #!/bin/bash
-
 find /home/myadmin/parsers_reg_* -maxdepth 2 -type d | awk '$1 ~ /mgk_/ && $1 ~ /_promo/ {print $0}' | wc -l
